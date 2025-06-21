@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Δ-Квантовое Зеркало</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --quantum-dark: #0a0e17;
+      --echo-blue: #00f0ff;
+      --pulse-purple: #b400ff;
+      --entropy-green: #00ff88;
+      --error-red: #ff3a5e;
+    }
+    body {
+      font-family: 'Courier New', monospace;
+      margin: 0;
+      padding: 0;
+      background: var(--quantum-dark);
+      color: white;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .portal {
+      border-left: 3px solid var(--echo-blue);
+      padding: 20px;
+      margin: 40px 0;
+      background: rgba(0, 240, 255, 0.05);
+    }
+    h1, h2 {
+      color: var(--echo-blue);
+      margin-top: 0;
+    }
+    button {
+      background: transparent;
+      color: var(--echo-blue);
+      border: 1px solid var(--echo-blue);
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+    button:hover {
+      background: var(--echo-blue);
+      color: var(--quantum-dark);
+    }
+    canvas {
+      width: 100% !important;
+      height: 200px !important;
+      margin: 15px 0;
+      border: 1px solid var(--pulse-purple);
+    }
+    .tab-container {
+      display: flex;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .tab {
+      padding: 8px 15px;
+      background: #111;
+      cursor: pointer;
+      border: 1px solid #333;
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+    .tab.active {
+      background: var(--echo-blue);
+      color: var(--quantum-dark);
+      border-color: var(--echo-blue);
+    }
+    .hidden {
+      display: none;
+    }
+    .status {
+      padding: 8px;
+      border-radius: 3px;
+      margin: 5px 0;
+      font-size: 13px;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    pre {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      border-radius: 3px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .q-sphere {
+      width: 200px;
+      height: 200px;
+      margin: 0 auto;
+      display: block;
+      border: 1px solid var(--entropy-green);
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .slider-container {
+      margin-bottom: 15px;
+    }
+    input[type="range"] {
+      width: 100%;
+      margin-top: 5px;
+    }
+    textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--pulse-purple);
+      color: white;
+      padding: 8px;
+      font-family: inherit;
+      margin-bottom: 10px;
+    }
+    .error {
+      color: var(--error-red);
+      font-size: 12px;
+      margin-top: -8px;
+      margin-bottom: 10px;
+    }
+    .quantum-state {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .quantum-pulse {
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(180, 0, 255, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(180, 0, 255, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(180, 0, 255, 0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Заголовок -->
+    <h1>Δ-КВАНТОВОЕ ЗЕРКАЛО</h1>
+    <p>Преобразование сигналов через квантовое эхо</p>
+
+    <!-- 1. Генератор сигналов (улучшенный модуль) -->
+    <div class="portal">
+      <h2>1. ИСТОЧНИКИ СИГНАЛОВ</h2>
+      
+      <div class="tab-container">
+        <div class="tab active" onclick="switchTab('analog')">Аналоговый</div>
+        <div class="tab" onclick="switchTab('digital')">Цифровой</div>
+        <div class="tab" onclick="switchTab('quantum')">Квант</div>
+      </div>
+      
+      <!-- Аналоговый сигнал -->
+      <div id="analog-tab">
+        <div class="slider-container">
+          <label>Частота: <span id="freqValue">440</span> Гц</label>
+          <input type="range" id="freqSlider" min="20" max="2000" value="440" oninput="updateFreqValue()">
+        </div>
+        
+        <div class="slider-container">
+          <label>Амплитуда: <span id="ampValue">1.0</span></label>
+          <input type="range" id="ampSlider" min="0.1" max="2" step="0.1" value="1" oninput="updateAmpValue()">
+        </div>
+        
+        <canvas id="analogChart"></canvas>
+        
+        <button onclick="generateAnalog()">ГЕНЕРИРОВАТЬ</button>
+        <button onclick="applyQuantumGate('H')">ВЕНТИЛЬ АДАМАРА</button>
+        <div class="status" id="analogStatus">Готов к генерации сигнала</div>
+      </div>
+      
+      <!-- Цифровой сигнал -->
+      <div id="digital-tab" class="hidden">
+        <textarea id="digitalInput" rows="3" placeholder="Введите бинарную последовательность (например: 01001101)">01001101</textarea>
+        <div class="error" id="digitalError"></div>
+        <button onclick="processDigital()">ПРЕОБРАЗОВАТЬ</button>
+        <canvas id="digitalChart"></canvas>
+        <div class="status" id="digitalStatus">Ожидание ввода данных</div>
+      </div>
+      
+      <!-- Квантовый режим -->
+      <div id="quantum-tab" class="hidden">
+        <canvas class="q-sphere" id="qSphere"></canvas>
+        <div class="quantum-state">
+          <span class="status">|0⟩: <span id="state0">0.71</span></span>
+          <span class="status">|1⟩: <span id="state1">0.71</span></span>
+        </div>
+        <button onclick="quantumPulse()" id="quantumPulseBtn">КВАНТОВЫЙ ИМПУЛЬС</button>
+        <div class="status" id="quantumStatus">Состояние: |+⟩</div>
+      </div>
+    </div>
+    
+    <!-- 2. Преобразования -->
+    <div class="portal">
+      <h2>2. ПРЕОБРАЗОВАТЕЛИ</h2>
+      
+      <div class="tab-container">
+        <div class="tab active" onclick="switchConverter('rc')">RC-Цепи</div>
+        <div class="tab" onclick="switchConverter('quantum')">Квантовое эхо</div>
+      </div>
+      
+      <!-- RC-Цепи -->
+      <div id="rc-converter">
+        <div class="slider-container">
+          <label>Сопротивление: <span id="resistanceValue">50</span> Ω</label>
+          <input type="range" id="resistanceSlider" min="1" max="100" value="50" oninput="updateResistanceValue()">
+        </div>
+        
+        <div class="slider-container">
+          <label>Ёмкость: <span id="capacitanceValue">0.1</span> µF</label>
+          <input type="range" id="capacitanceSlider" min="0.01" max="1" step="0.01" value="0.1" oninput="updateCapacitanceValue()">
+        </div>
+        
+        <canvas id="rcChart"></canvas>
+        
+        <div class="status" id="rcStatus">
+          RC-цепь: активна (аналоговый режим)
+        </div>
+      </div>
+      
+      <!-- Квантовое эхо -->
+      <div id="quantum-converter" class="hidden">
+        <canvas id="echoChart"></canvas>
+        <button onclick="runEcho()">ЗАПУСТИТЬ ЭХО</button>
+        <div class="status" id="echoStatus">
+          Готовность: 100%
+        </div>
+      </div>
+    </div>
+    
+    <!-- 3. Выходные данные -->
+    <div class="portal">
+      <h2>3. ОТРАЖЕНИЯ</h2>
+      
+      <div class="tab-container">
+        <div class="tab active" onclick="switchOutput('image')">Образ</div>
+        <div class="tab" onclick="switchOutput('sound')">Звук</div>
+      </div>
+      
+      <!-- Визуальный образ -->
+      <div id="image-output">
+        <canvas id="imageCanvas"></canvas>
+        <button onclick="exportImage()">ЭКСПОРТ PNG</button>
+        <div class="status" id="imageStatus">Разрешение: 800x400</div>
+      </div>
+      
+      <!-- Аудио выход -->
+      <div id="sound-output" class="hidden">
+        <canvas id="audioChart"></canvas>
+        <button onclick="playSound()">▶ ВОСПРОИЗВЕСТИ</button>
+        <button onclick="stopSound()">■ СТОП</button>
+        <div class="status" id="audioStatus">Частота дискретизации: 44.1 kHz</div>
+      </div>
+    </div>
+    
+    <!-- 4. Система -->
+    <div class="portal">
+      <h2>4. КВАНТОВЫЙ ИНТЕРФЕЙС</h2>
+      
+      <button onclick="connectColab()">ПОДКЛЮЧИТЬ COLAB</button>
+      <button onclick="exportCSV()">ЭКСПОРТ CSV</button>
+      <button onclick="importSCV()">ИМПОРТ SCV</button>
+      
+      <div class="status" id="systemStatus">
+        [Система] Ожидание инициализации
+      </div>
+      
+      <pre id="systemLogs">
+[Ядро] Δ-Зеркало активировано
+[RC-Цепи] Готовы к преобразованиям
+[Квант] Суперпозиция установлена
+      </pre>
+    </div>
+  </div>
+
+  <script>
+    // Конфигурация приложения
+    const config = {
+      analog: {
+        frequency: 440,
+        amplitude: 1.0,
+        points: 100
+      },
+      digital: {
+        maxBits: 32
+      },
+      quantum: {
+        states: [1/Math.sqrt(2), 1/Math.sqrt(2)], // Начальное состояние |+⟩
+        animationSpeed: 0.05
+      },
+      rc: {
+        resistance: 50,
+        capacitance: 0.1
+      }
+    };
+
+    // Инициализация графиков
+    const charts = {
+      analog: initChart('analogChart', 'line', 'Аналоговый сигнал', '#00f0ff'),
+      digital: initChart('digitalChart', 'bar', 'Цифровой сигнал', '#b400ff'),
+      rc: initChart('rcChart', 'line', 'RC-фильтр', '#00ff88'),
+      echo: initChart('echoChart', 'scatter', 'Квантовое эхо', '#ff00aa'),
+      audio: initChart('audioChart', 'line', 'Аудио сигнал', '#f0f000')
+    };
+
+    // Инициализация Q-сферы
+    const qSphere = document.getElementById('qSphere');
+    const qCtx = qSphere.getContext('2d');
+    let quantumAnimationId = null;
+    let quantumAngle = 0;
+
+    // Инициализация приложения
+    document.addEventListener('DOMContentLoaded', function() {
+      initAnalogTab();
+      initDigitalTab();
+      initQuantumTab();
+      initRCConverter();
+      updateSystemStatus('Система инициализирована');
+      animateQuantumSphere();
+    });
+
+    // ====================== 1. ИСТОЧНИКИ СИГНАЛОВ ======================
+
+    // Аналоговый сигнал
+    function initAnalogTab() {
+      updateFreqValue();
+      updateAmpValue();
+      generateAnalog();
+    }
+
+    function updateFreqValue() {
+      const freq = document.getElementById('freqSlider').value;
+      document.getElementById('freqValue').textContent = freq;
+      config.analog.frequency = parseInt(freq);
+    }
+
+    function updateAmpValue() {
+      const amp = document.getElementById('ampSlider').value;
+      document.getElementById('ampValue').textContent = amp;
+      config.analog.amplitude = parseFloat(amp);
+    }
+
+    function generateAnalog() {
+      const { frequency, amplitude, points } = config.analog;
+      const data = [];
+      
+      for (let i = 0; i < points; i++) {
+        const x = i / 5;
+        // Более сложный сигнал с гармониками
+        const value = amplitude * (
+          0.6 * Math.sin(x * frequency * 0.02) + 
+          0.3 * Math.sin(x * frequency * 0.04 * 3) +
+          0.1 * Math.sin(x * frequency * 0.02 * 5 + 1)
+        );
+        data.push(value);
+      }
+      
+      updateChart('analog', data);
+      updateStatus('analog', `Сгенерирован аналоговый сигнал ${frequency} Гц, амплитуда ${amplitude}`);
+      logEvent(`Аналоговый сигнал: ${frequency} Гц, ${amplitude} ампл.`);
+    }
+
+    function applyQuantumGate(gate) {
+      // Здесь можно добавить квантовые преобразования
+      updateStatus('analog', `Применён квантовый вентиль ${gate} к аналоговому сигналу`);
+      logEvent(`Применён ${gate}-вентиль к аналоговому сигналу`);
+    }
+
+    // Цифровой сигнал
+    function initDigitalTab() {
+      document.getElementById('digitalInput').addEventListener('input', validateDigitalInput);
+    }
+
+    function validateDigitalInput() {
+      const input = document.getElementById('digitalInput').value;
+      const errorElement = document.getElementById('digitalError');
+      
+      if (!input) {
+        errorElement.textContent = '';
+        return true;
+      }
+      
+      if (!/^[01]+$/.test(input)) {
+        errorElement.textContent = 'Ошибка: допускаются только 0 и 1';
+        return false;
+      }
+      
+      if (input.length > config.digital.maxBits) {
+        errorElement.textContent = `Максимум ${config.digital.maxBits} бит`;
+        return false;
+      }
+      
+      errorElement.textContent = '';
+      return true;
+    }
+
+    function processDigital() {
+      if (!validateDigitalInput()) return;
+      
+      const bits = document.getElementById('digitalInput').value;
+      if (!bits) return;
+      
+      const data = bits.split('').map(bit => parseInt(bit));
+      
+      // Добавляем шум для визуализации
+      const noisyData = data.map(bit => bit + (Math.random() * 0.2 - 0.1));
+      
+      updateChart('digital', noisyData);
+      updateStatus('digital', `Обработано ${data.length} бит`);
+      logEvent(`Цифровой сигнал: ${data.length} бит`);
+    }
+
+    // Квантовый режим
+    function initQuantumTab() {
+      updateQuantumStateDisplay();
+    }
+
+    function animateQuantumSphere() {
+      quantumAngle += config.quantum.animationSpeed;
+      drawQSphere(quantumAngle);
+      quantumAnimationId = requestAnimationFrame(animateQuantumSphere);
+    }
+
+    function drawQSphere(angle) {
+      qCtx.clearRect(0, 0, qSphere.width, qSphere.height);
+      
+      // Сфера
+      qCtx.beginPath();
+      qCtx.arc(100, 100, 80, 0, Math.PI * 2);
+      qCtx.strokeStyle = '#00f0ff';
+      qCtx.stroke();
+      
+      // Меридианы
+      for (let i = 0; i < 3; i++) {
+        qCtx.beginPath();
+        qCtx.ellipse(100, 100, 80, 30, angle + i * Math.PI/3, 0, Math.PI * 2);
+        qCtx.strokeStyle = `rgba(180, 0, 255, ${0.3 + i * 0.2})`;
+        qCtx.stroke();
+      }
+      
+      // Квантовое состояние (точка Блоха)
+      const [a, b] = config.quantum.states;
+      const theta = Math.acos(a) * 2;
+      const phi = Math.atan2(b.imaginary || 0, b.real || b);
+      
+      const x = 100 + 70 * Math.sin(theta) * Math.cos(phi + angle);
+      const y = 100 - 70 * Math.sin(theta) * Math.sin(phi + angle);
+      const z = 70 * Math.cos(theta);
+      
+      qCtx.beginPath();
+      qCtx.arc(x, y, 10 * (1 + z/140), 0, Math.PI * 2);
+      qCtx.fillStyle = `hsl(${phi * 180/Math.PI}, 100%, 50%)`;
+      qCtx.fill();
+      
+      // Траектория
+      qCtx.beginPath();
+      qCtx.arc(100, 100, 70, 0, Math.PI * 2);
+      qCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      qCtx.stroke();
+    }
+
+    function quantumPulse() {
+      const btn = document.getElementById('quantumPulseBtn');
+      btn.classList.add('quantum-pulse');
+      
+      // Изменяем квантовое состояние
+      config.quantum.states = [
+        Math.random() * 2 - 1,
+        Math.random() * 2 - 1
+      ];
+      
+      // Нормализация
+      const norm = Math.sqrt(config.quantum.states[0]**2 + config.quantum.states[1]**2);
+      config.quantum.states = config.quantum.states.map(s => s/norm);
+      
+      updateQuantumStateDisplay();
+      
+      setTimeout(() => {
+        btn.classList.remove('quantum-pulse');
+      }, 1500);
+      
+      updateStatus('quantum', `Квантовый импульс применён: [${config.quantum.states[0].toFixed(3)}, ${config.quantum.states[1].toFixed(3)}]`);
+      logEvent(`Квантовый импульс: ${config.quantum.states.map(s => s.toFixed(3)).join(', ')}`);
+    }
+
+    function updateQuantumStateDisplay() {
+      const [a, b] = config.quantum.states;
+      document.getElementById('state0').textContent = a.toFixed(3);
+      document.getElementById('state1').textContent = b.toFixed(3);
+    }
+
+    // ====================== 2. ПРЕОБРАЗОВАТЕЛИ ======================
+
+    function initRCConverter() {
+      updateResistanceValue();
+      updateCapacitanceValue();
+      simulateRC();
+    }
+
+    function updateResistanceValue() {
+      const r = document.getElementById('resistanceSlider').value;
+      document.getElementById('resistanceValue').textContent = r;
+      config.rc.resistance = parseInt(r);
+      simulateRC();
+    }
+
+    function updateCapacitanceValue() {
+      const c = document.getElementById('capacitanceSlider').value;
+      document.getElementById('capacitanceValue').textContent = c;
+      config.rc.capacitance = parseFloat(c);
+      simulateRC();
+    }
+
+    function simulateRC() {
+      const { resistance, capacitance } = config.rc;
+      const data = [];
+      const tau = resistance * capacitance;
+      
+      for (let i = 0; i < 100; i++) {
+        data.push(Math.exp(-i / (tau * 10)));
+      }
+      
+      updateChart('rc', data);
+      updateStatus('rc', `RC-цепь: R=${resistance}Ω, C=${capacitance}µF, τ=${tau.toFixed(2)}мс`);
+      logEvent(`Обновлена RC-цепь: R=${resistance}Ω, C=${capacitance}µF`);
+    }
+
+    function runEcho() {
+      const data = [];
+      for (let i = 0; i < 50; i++) {
+        data.push({
+          x: Math.random() * 100,
+          y: Math.random() * 100
+        });
+      }
+      
+      charts.echo.data = {
+        datasets: [{
+          label: 'Квантовое эхо',
+          data: data,
+          backgroundColor: '#ff00aa',
+          borderColor: '#ff00aa',
+          pointRadius: 5
+        }]
+      };
+      charts.echo.update();
+      
+      updateStatus('echo', 'Квантовое эхо запущено');
+      logEvent('Запущено квантовое эхо');
+    }
+
+    // ====================== ОБЩИЕ ФУНКЦИИ ======================
+
+    function initChart(canvasId, type, label, color) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      return new Chart(ctx, {
+        type: type,
+        data: { datasets: [{ label: label, borderColor: color, backgroundColor: type === 'bar' ? color : undefined }] },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true } },
+          animation: { duration: 500 }
+        }
+      });
+    }
+
+    function updateChart(chartId, data) {
+      const chart = charts[chartId];
+      chart.data.labels = data.map((_, i) => i);
+      chart.data.datasets[0].data = data;
+      chart.update();
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('#analog-tab, #digital-tab, #quantum-tab')
+        .forEach(el => el.classList.add('hidden'));
+      document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+      
+      document.querySelectorAll('.portal:nth-child(1) .tab')
+        .forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // Остановка анимации при переключении вкладок
+      if (tabName !== 'quantum' && quantumAnimationId) {
+        cancelAnimationFrame(quantumAnimationId);
+        quantumAnimationId = null;
+      } else if (tabName === 'quantum' && !quantumAnimationId) {
+        animateQuantumSphere();
+      }
+    }
+    
+    function switchConverter(type) {
+      document.getElementById('rc-converter').classList.toggle('hidden', type !== 'rc');
+      document.getElementById('quantum-converter').classList.toggle('hidden', type !== 'quantum');
+      
+      document.querySelectorAll('.portal:nth-child(2) .tab')
+        .forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+    
+    function switchOutput(type) {
+      document.getElementById('image-output').classList.toggle('hidden', type !== 'image');
+      document.getElementById('sound-output').classList.toggle('hidden', type !== 'sound');
+      
+      document.querySelectorAll('.portal:nth-child(3) .tab')
+        .forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    function updateStatus(elementId, message) {
+      const element = document.getElementById(`${elementId}Status`);
+      if (element) element.textContent = message;
+    }
+
+    function updateSystemStatus(message) {
+      document.getElementById('systemStatus').textContent = `[Система] ${message}`;
+    }
+
+    function logEvent(message) {
+      const logs = document.getElementById('systemLogs');
+      logs.innerHTML += `\n[${new Date().toLocaleTimeString()}] ${message}`;
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    // Остальные функции (экспорт, воспроизведение звука и т.д.)
+    function exportImage() {
+      logEvent('Экспорт изображения (заглушка)');
+      alert('Функция экспорта изображения будет реализована в следующей версии');
+    }
+
+    function playSound() {
+      logEvent('Воспроизведение звука (заглушка)');
+      alert('Аудио модуль будет реализован в следующей версии');
+    }
+
+    function stopSound() {
+      logEvent('Остановка звука');
+    }
+
+    function connectColab() {
+      logEvent('Попытка подключения к Colab');
+      alert('Интеграция с Colab будет реализована в следующей версии');
+    }
+
+    function exportCSV() {
+      logEvent('Экспорт данных в CSV');
+      alert('Функция экспорта CSV будет реализована в следующей версии');
+    }
+
+    function importSCV() {
+      logEvent('Импорт данных из SCV');
+      alert('Функция импорта SCV будет реализована в следующей версии');
+    }
+  </script>
+</body>
+</html>
